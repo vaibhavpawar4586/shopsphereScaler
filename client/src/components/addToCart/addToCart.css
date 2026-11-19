@@ -1,0 +1,32 @@
+.qty-control {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.qty-control button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.qty-control button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.qty-control .quantity {
+  min-width: 36px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.add-to-cart-out {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-danger);
+}

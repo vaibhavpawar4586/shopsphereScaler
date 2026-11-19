@@ -1,0 +1,35 @@
+.listing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.listing-header .page-title {
+  margin-bottom: 2px;
+}
+.listing-header p {
+  margin: 0;
+}
+
+.listing-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+.listing-sort select {
+  width: auto;
+}
+
+.product-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+  transition: opacity 0.15s;
+}
+.product-list.is-refreshing {
+  opacity: 0.5;
+}

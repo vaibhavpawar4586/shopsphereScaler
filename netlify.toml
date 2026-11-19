@@ -1,0 +1,12 @@
+# Netlify settings for the React frontend.
+# Set VITE_BASE_URL (your Render API URL) in Netlify > Site configuration > Environment variables.
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+# Single-page app: send every route to index.html so React Router can handle it.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

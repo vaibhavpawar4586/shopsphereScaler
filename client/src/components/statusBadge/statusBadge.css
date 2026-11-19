@@ -1,0 +1,24 @@
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status-warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+.status-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+.status-info {
+  background: var(--color-info-soft);
+  color: var(--color-info);
+}
+.status-success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
