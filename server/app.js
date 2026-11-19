@@ -22,8 +22,9 @@ const ReviewRouter = require('./src/routers/ReviewRouter');
 
 const app = express();
 
-// Render and Netlify sit behind a proxy; this makes req.ip the real client IP (used by the rate limiter).
-app.set('trust proxy', 1);
+// The app runs behind proxies (Render, and Netlify when proxied); this makes req.ip the real
+// client IP, which the rate limiter uses.
+app.set('trust proxy', env.TRUST_PROXY_HOPS);
 
 // Security headers (hides "X-Powered-By: Express", adds CSP, HSTS, nosniff, etc).
 app.use(helmet());
@@ -40,7 +41,8 @@ const corsConfig = {
 app.use(cors(corsConfig));
 
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'success', message: 'ok', payments: env.paymentsMode });
+    // `ip` is the caller's own address as the server sees it (used to check proxy settings).
+    res.status(200).json({ status: 'success', message: 'ok', payments: env.paymentsMode, ip: req.ip });
 });
 
 // Razorpay webhook: needs the raw body to verify the signature, so it is registered

@@ -1,19 +1,28 @@
 # Render Blueprint for the backend API (https://render.com/docs/blueprint-spec).
-# In Render: New > Blueprint > pick this repository. Fill in the "sync: false" values in the dashboard.
+# In Render: New > Blueprint > pick this repository. Render asks for every "sync: false" value.
 services:
   - type: web
     name: shopsphere-api
     runtime: node
     rootDir: server
     plan: free
+    region: singapore
     buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "22"
       - key: JWT_SECRET
         generateValue: true
+      # Requests arrive through Netlify's proxy and Render's load balancer.
+      - key: TRUST_PROXY_HOPS
+        value: "2"
+      # Create the sample catalogue on first start (accounts only for the passwords you set).
+      - key: SEED_SAMPLE_DATA
+        value: "true"
       - key: MONGO_URI
         sync: false
       - key: CLIENT_URL
@@ -24,7 +33,11 @@ services:
         sync: false
       - key: RAZORPAY_WEBHOOK_SECRET
         sync: false
+      - key: SEED_ADMIN_PASSWORD
+        sync: false # password for admin@shopsphere.test
+      - key: SEED_CUSTOMER_PASSWORD
+        sync: false # optional: password for customer@shopsphere.test
       - key: SENDGRID_API_KEY
-        sync: false
+        sync: false # optional: forgot-password emails
       - key: SENDER_EMAIL
         sync: false

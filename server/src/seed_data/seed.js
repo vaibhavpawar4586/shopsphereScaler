@@ -9,14 +9,16 @@
  * The development server runs the same "add anything missing" step on start-up,
  * so new sample products appear without wiping your local orders.
  *
- * Demo accounts (change the passwords with SEED_ADMIN_PASSWORD etc.):
+ * Demo accounts. These default passwords are used in development only; in production an
+ * account is created only if its SEED_ADMIN_PASSWORD / SEED_SELLER_PASSWORD /
+ * SEED_CUSTOMER_PASSWORD is set:
  *   admin@shopsphere.test     Admin@12345
  *   seller@shopsphere.test    Seller@12345
  *   customer@shopsphere.test  Customer@12345
  * Three reviewer accounts (reviewer1..3@shopsphere.test) get random passwords; they only
  * exist to own the sample reviews.
  */
-require('../config/env'); // loads .env before the demo passwords below are read
+const env = require('../config/env'); // also loads .env before the demo passwords below are read
 const crypto = require('crypto');
 const ProductModel = require('../models/productModel');
 const UserModel = require('../models/userModel');
@@ -27,10 +29,12 @@ const moreProductsData = require('./MoreProductsData');
 
 const ALL_PRODUCTS = [...productsData, ...moreProductsData];
 
+// The default passwords are for local development only. In production an account is
+// only created if its SEED_*_PASSWORD is set, so a public site never has a known admin password.
 const DEMO_USERS = [
-    { name: 'Store Admin', email: 'admin@shopsphere.test', role: 'admin', password: process.env.SEED_ADMIN_PASSWORD || 'Admin@12345' },
-    { name: 'Demo Seller', email: 'seller@shopsphere.test', role: 'seller', password: process.env.SEED_SELLER_PASSWORD || 'Seller@12345' },
-    { name: 'Demo Customer', email: 'customer@shopsphere.test', role: 'user', password: process.env.SEED_CUSTOMER_PASSWORD || 'Customer@12345' },
+    { name: 'Store Admin', email: 'admin@shopsphere.test', role: 'admin', envPassword: 'SEED_ADMIN_PASSWORD', devPassword: 'Admin@12345' },
+    { name: 'Demo Seller', email: 'seller@shopsphere.test', role: 'seller', envPassword: 'SEED_SELLER_PASSWORD', devPassword: 'Seller@12345' },
+    { name: 'Demo Customer', email: 'customer@shopsphere.test', role: 'user', envPassword: 'SEED_CUSTOMER_PASSWORD', devPassword: 'Customer@12345' },
 ];
 
 const REVIEWERS = [
@@ -46,7 +50,16 @@ async function findOrCreateUser(details) {
 
 async function ensureUsers() {
     const users = {};
-    for (const demo of DEMO_USERS) users[demo.role] = await findOrCreateUser(demo);
+    for (const { envPassword, devPassword, ...demo } of DEMO_USERS) {
+        const password = process.env[envPassword] || (env.isProd ? '' : devPassword);
+        if (!password) {
+            const existing = await UserModel.findOne({ email: demo.email });
+            if (existing) users[demo.role] = existing;
+            else console.warn(`[seed] ${envPassword} is not set - skipping the ${demo.email} account`);
+            continue;
+        }
+        users[demo.role] = await findOrCreateUser({ ...demo, password });
+    }
     const reviewers = [];
     for (const reviewer of REVIEWERS) {
         reviewers.push(
@@ -110,7 +123,7 @@ async function ensureSampleReviews(reviewers) {
 /** Adds whatever is missing. Safe to run any number of times. */
 async function syncSeedData() {
     const users = await ensureUsers();
-    const products = await ensureProducts(users.admin._id);
+    const products = await ensureProducts(users.admin && users.admin._id);
     const reviews = await ensureSampleReviews(users.reviewers);
     if (products || reviews) {
         console.log(`[seed] added ${products} product(s) and ${reviews} sample review(s) (see src/seed_data/seed.js)`);

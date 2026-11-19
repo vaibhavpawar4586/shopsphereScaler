@@ -34,6 +34,14 @@ const CLIENT_URLS = (process.env.CLIENT_URL || 'http://localhost:5173')
     .map((url) => url.trim().replace(/\/+$/, ''))
     .filter(Boolean);
 
+// "lax" works when the frontend reaches the API through the Netlify /api proxy (same site).
+// Use "none" only if the browser calls the API on a different domain directly.
+const COOKIE_SAMESITE = ['lax', 'strict', 'none'].includes(process.env.COOKIE_SAMESITE) ? process.env.COOKIE_SAMESITE : 'lax';
+
+// Number of proxies in front of the app (Render's load balancer, plus Netlify's when proxied).
+// Express uses it to find the real client IP for rate limiting.
+const TRUST_PROXY_HOPS = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10) || 1;
+
 module.exports = Object.freeze({
     NODE_ENV,
     isProd,
@@ -43,6 +51,10 @@ module.exports = Object.freeze({
     JWT_SECRET,
     JWT_EXPIRES_IN_DAYS: 7,
     CLIENT_URLS,
+    COOKIE_SAMESITE,
+    TRUST_PROXY_HOPS,
+    // Production only: create sample products/accounts on start-up (needs SEED_*_PASSWORD).
+    SEED_SAMPLE_DATA: process.env.SEED_SAMPLE_DATA === 'true',
     RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET,
     RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET || '',

@@ -280,14 +280,31 @@ The project follows the course's structure and naming, with these fixes:
 
 ## Deployment
 
-1. **GitHub** – push this repository.
-2. **MongoDB Atlas** – create a free cluster, a database user, and allow access from Render (Network Access → `0.0.0.0/0` or Render's outbound IPs). Copy the connection string.
-3. **Render (API)** – New → Blueprint → select the repo (uses `render.yaml`), or New → Web Service with root directory `server`, build `npm ci --omit=dev`, start `npm start`. Set `MONGO_URI`, `CLIENT_URL` (your Netlify URL), Razorpay keys and SendGrid settings. Then seed the catalogue once from your machine with `MONGO_URI` set: `npm run seed --prefix server`.
-4. **Netlify (frontend)** – Add new site → import from GitHub. `netlify.toml` sets base `client`, build `npm run build`, publish `dist`. Add the environment variable `VITE_BASE_URL=https://<your-api>.onrender.com`.
-5. **Razorpay** – add the webhook `https://<your-api>.onrender.com/api/booking/webhook` with the events above.
-6. **CORS** – `CLIENT_URL` on Render must exactly match the Netlify URL (no trailing slash). Several URLs can be comma separated.
+```mermaid
+flowchart LR
+    B[Browser] -->|"pages + /api/*"| N[Netlify<br/>React build]
+    N -->|"proxy /api/*"| R[Render<br/>Express API]
+    R --> M[(MongoDB Atlas)]
+    RZ[Razorpay] -->|webhook| R
+```
 
-Note: Render's free plan sleeps after 15 minutes without traffic, so the first request after that can take around 30–60 seconds.
+The browser only talks to the Netlify site; Netlify forwards `/api/*` to Render (`netlify.toml`). This keeps the login cookie first-party, which matters because Safari and other privacy-focused browsers block cookies set by a different site. It also means `VITE_BASE_URL` stays empty.
+
+1. **GitHub** – push this repository.
+2. **MongoDB Atlas** – create a free (M0) cluster and a database user, and allow access from anywhere (Network Access → `0.0.0.0/0`), because Render's free plan has no fixed IP. Copy the connection string and add a database name, e.g. `...mongodb.net/shopsphere?retryWrites=true&w=majority`.
+3. **Render (API)** – New → Blueprint → select the repo. `render.yaml` creates `shopsphere-api` and generates `JWT_SECRET`. Fill in:
+   - `MONGO_URI` – the Atlas connection string
+   - `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` – test or live keys
+   - `SEED_ADMIN_PASSWORD` – password for `admin@shopsphere.test` (and optionally `SEED_CUSTOMER_PASSWORD`)
+   - `CLIENT_URL` – your Netlify URL (you can fill this in after step 4)
+   - optional: `RAZORPAY_WEBHOOK_SECRET`, `SENDGRID_API_KEY`, `SENDER_EMAIL`
+
+   `SEED_SAMPLE_DATA=true` adds the sample catalogue on first start. Check `https://<service>.onrender.com/api/health`.
+4. **Netlify (frontend)** – Add new site → Import from GitHub → this repo. `netlify.toml` sets base `client`, build `npm run build`, publish `dist`, and the `/api` proxy. If your Render URL isn't `https://shopsphere-api.onrender.com`, change it in `netlify.toml` and push.
+5. **CORS** – set `CLIENT_URL` on Render to the exact Netlify URL (no trailing slash; comma-separate several).
+6. **Razorpay webhook** (optional) – `https://<service>.onrender.com/api/booking/webhook` with `payment.captured`, `payment.failed` and `order.paid`, and the same secret in `RAZORPAY_WEBHOOK_SECRET`.
+
+Note: Render's free plan sleeps after 15 minutes without traffic, and the first request after that takes around a minute. The frontend retries read requests while the API wakes up.
 
 ---
 

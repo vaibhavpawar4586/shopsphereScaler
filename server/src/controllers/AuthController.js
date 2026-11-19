@@ -19,13 +19,16 @@ const MAX_OTP_ATTEMPTS = 5;
 
 /**
  * httpOnly: JavaScript in the page cannot read the cookie (protects against XSS token theft).
- * secure + sameSite "none" in production: needed because the frontend (Netlify) and
- * backend (Render) are on different domains. In development "lax" works with the Vite proxy.
+ * secure: only sent over HTTPS in production.
+ * sameSite "lax": the browser only talks to one site (Vite proxies /api in development,
+ * Netlify proxies /api in production), so the cookie is first-party and not sent with
+ * requests started by other websites. Browsers like Safari block cross-site cookies, which
+ * is why the frontend doesn't call the Render domain directly.
  */
 const cookieOptions = () => ({
     httpOnly: true,
-    secure: env.isProd,
-    sameSite: env.isProd ? 'none' : 'lax',
+    secure: env.isProd || env.COOKIE_SAMESITE === 'none',
+    sameSite: env.COOKIE_SAMESITE,
     path: '/',
 });
 

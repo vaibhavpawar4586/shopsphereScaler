@@ -6,8 +6,9 @@ const { releaseExpiredBookings } = require('./src/services/bookingService');
 
 async function start() {
     await connectDB();
-    // In development, add any missing sample products, demo accounts and sample reviews.
-    if (!env.isProd) await syncSeedData();
+    // Add any missing sample products, demo accounts and sample reviews.
+    // Always in development; in production only when SEED_SAMPLE_DATA=true.
+    if (!env.isProd || env.SEED_SAMPLE_DATA) await syncSeedData();
 
     const server = app.listen(env.PORT, () => {
         console.log(`[api] server is listening on port ${env.PORT} (payments: ${env.paymentsMode})`);
