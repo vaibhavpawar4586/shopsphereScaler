@@ -19,6 +19,26 @@
   padding: 24px;
   background: #fff;
 }
+
+.detail-thumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.detail-thumb {
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  cursor: pointer;
+}
+.detail-thumb.active,
+.detail-thumb:hover {
+  border-color: var(--color-primary);
+}
 @media (max-width: 760px) {
   .detail-image {
     height: 300px;

@@ -10,8 +10,10 @@ Customers can browse and search products, add them to a cart, pay with Razorpay 
 
 **Customers**
 - Sign up, log in, log out; forgot / reset password with an emailed 6-digit OTP
-- Product catalogue with search, category filter, sorting (price, rating, newest) and pagination – all done in the database
-- Product page with price, MRP, discount %, stock status and customer reviews
+- 131 sample products in 10 categories, with search and pagination
+- Filters for price (presets or custom range), brand (multi-select with counts), customer rating, discount and in-stock only, shown as removable chips and saved in the URL so filtered pages can be shared
+- Sorting by newest, price, top rated or biggest discount – all searching, filtering and sorting is done by the database
+- Product page with an image gallery, price, MRP, discount %, stock status and customer reviews
 - Cart saved in the browser, with quantity limits based on stock
 - Checkout with an Indian shipping address and Razorpay payment
 - "My orders" with a status timeline; pay later or cancel an unpaid order
@@ -123,7 +125,12 @@ npm run dev
 - Frontend: http://localhost:5173
 - API: http://localhost:3001 (`/api/health` to check)
 
-On first start the database is filled with 20 products and three demo accounts (defined in `server/src/seed_data/seed.js`):
+On start-up the development server adds any missing sample data. It never changes or deletes what's already there, so your local orders are kept. The sample data is:
+- 20 products from the course data feed (`ProductsData.js`)
+- 111 products from the open [dummyjson.com](https://dummyjson.com) dataset (`MoreProductsData.js`), each with 3 sample reviews owned by three demo reviewer accounts
+- the demo accounts below (defined in `server/src/seed_data/seed.js`)
+
+To fill a separate database such as Atlas, run `npm run seed --prefix server` with `MONGO_URI` set. `npm run seed --prefix server -- --reset` deletes all products and reviews first.
 
 | Role | Email | Password |
 |---|---|---|
@@ -154,7 +161,7 @@ Copy `server/.env.example` to `server/.env` (and optionally `client/.env.example
 npm test
 ```
 
-27 API tests run against an in-memory MongoDB. They cover bcrypt hashing, cookies, role checks, NoSQL injection, the CSRF header, OTP reset, server-side pricing, shipping, stock reservation and release, order expiry, mock payments, forged Razorpay signatures, webhook signatures and idempotency, admin order flow and review rules.
+29 API tests run against an in-memory MongoDB. They cover bcrypt hashing, cookies, role checks, NoSQL injection, the CSRF header, OTP reset, search and every product filter, filter counts, server-side pricing, shipping, stock reservation and release, order expiry, mock payments, forged Razorpay signatures, webhook signatures and idempotency, admin order flow and review rules.
 
 ---
 
@@ -170,7 +177,8 @@ All responses use `{ status: "success" | "failure", message?, data?, pagination?
 | GET | `/api/auth/me` | user | Current user |
 | PATCH | `/api/auth/forgetpassword` | public | Email a 6-digit OTP |
 | PATCH | `/api/auth/resetPassword` | public | Reset password with email + OTP |
-| GET | `/api/product` | public | List (`q`, `category`, `minPrice`, `maxPrice`, `sort`, `page`, `limit`) |
+| GET | `/api/product` | public | List. Filters: `q`, `category`, `brand` (comma separated), `minPrice`, `maxPrice`, `minRating`, `minDiscount` (%), `inStock=true`. `sort`: `newest`, `price_asc`, `price_desc`, `rating`, `discount`. Paging: `page`, `limit` |
+| GET | `/api/product/filters` | public | Brand counts and price range for the same filters (for the filter sidebar) |
 | GET | `/api/product/categories` | public | Category names |
 | GET | `/api/product/:productId` | public | One product |
 | GET | `/api/product/admin/all` | admin, seller | List including hidden products |

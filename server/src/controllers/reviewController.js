@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const xss = require('xss');
 const ReviewModel = require('../models/ReviewModel');
 const ProductModel = require('../models/productModel');
@@ -6,23 +5,7 @@ const BookingModel = require('../models/BookingModel');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const { assertObjectId, toBoundedInt } = require('../utils/validators');
-
-/** Recalculates a product's average rating from all of its reviews. */
-async function updateProductRating(productId) {
-    const [stats] = await ReviewModel.aggregate([
-        { $match: { product: new mongoose.Types.ObjectId(productId) } },
-        { $group: { _id: '$product', average: { $avg: '$rating' }, count: { $sum: 1 } } },
-    ]);
-    await ProductModel.updateOne(
-        { _id: productId },
-        {
-            $set: {
-                averageRating: stats ? Math.round(stats.average * 10) / 10 : 0,
-                ratingCount: stats ? stats.count : 0,
-            },
-        }
-    );
-}
+const { updateProductRating } = require('../services/ratingService');
 
 /** POST /api/review/:productId - only customers who bought the product can review it. */
 const createReviewController = catchAsync(async (req, res) => {

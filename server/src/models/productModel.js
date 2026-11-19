@@ -36,8 +36,10 @@ const productSchemaRules = {
             message: 'Discount must be less than the actual price',
         },
     },
-    // Selling price = price - discount. Stored so the database can sort and filter on it.
+    // Selling price = price - discount, and the discount as a % of the price.
+    // Stored (not calculated on the fly) so the database can sort and filter on them.
     finalPrice: { type: Number },
+    discountPercent: { type: Number, default: 0 },
     categories: {
         type: [String],
         required: true,
@@ -69,11 +71,13 @@ const productSchema = new mongoose.Schema(productSchemaRules, { timestamps: true
 
 productSchema.index({ isActive: 1, categories: 1 });
 productSchema.index({ isActive: 1, finalPrice: 1 });
+productSchema.index({ isActive: 1, brand: 1 });
 
 productSchema.pre('validate', function setFinalPrice() {
     const price = Number(this.price) || 0;
     const discount = Number(this.discount) || 0;
     this.finalPrice = Math.round((price - discount) * 100) / 100;
+    this.discountPercent = price > 0 ? Math.round((discount / price) * 100) : 0;
     this.categories = (this.categories || []).map((c) => String(c).trim().toLowerCase()).filter(Boolean);
 });
 

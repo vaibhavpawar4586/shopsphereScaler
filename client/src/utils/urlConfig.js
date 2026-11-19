@@ -12,6 +12,7 @@ const urlConfig = {
 
   ALL_PRODUCT_URL: '/api/product',
   CATEGORIES_URL: '/api/product/categories',
+  PRODUCT_FILTERS_URL: '/api/product/filters',
   ADMIN_PRODUCTS_URL: '/api/product/admin/all',
   ADMIN_PRODUCT_URL: '/api/product/admin',
 

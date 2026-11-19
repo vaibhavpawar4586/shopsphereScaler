@@ -9,12 +9,31 @@ const SORT_OPTIONS = {
     price_asc: { finalPrice: 1 },
     price_desc: { finalPrice: -1 },
     rating: { averageRating: -1, ratingCount: -1 },
+    discount: { discountPercent: -1 },
     name: { name: 1 },
 };
 
-function buildSearchFilter(query, baseFilter) {
+/** Reads a number query param; returns undefined if it is missing or not a number. */
+function numberParam(value) {
+    if (value === undefined || value === '' || typeof value !== 'string') return undefined;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : undefined;
+}
+
+/**
+ * Turns the query string into a MongoDB filter.
+ *   q          text search in name, brand and category
+ *   category   one category
+ *   brand      one or more brands, comma separated
+ *   minPrice / maxPrice   selling price range in rupees
+ *   minRating  e.g. 4 = "4 stars & up"
+ *   minDiscount  e.g. 20 = "20% off or more"
+ *   inStock    "true" = hide out-of-stock products
+ * `skip` leaves out one filter - used to count brands while a brand filter is active.
+ */
+function buildSearchFilter(query, baseFilter, { skip } = {}) {
     const filter = { ...baseFilter };
-    const { q, category, minPrice, maxPrice } = query;
+    const { q, category, brand, inStock } = query;
 
     if (typeof q === 'string' && q.trim()) {
         // Escaped so user input can't inject regex syntax.
@@ -24,10 +43,21 @@ function buildSearchFilter(query, baseFilter) {
     if (typeof category === 'string' && category.trim()) {
         filter.categories = category.trim().toLowerCase();
     }
-    const min = Number(minPrice);
-    const max = Number(maxPrice);
-    if (minPrice !== undefined && Number.isFinite(min)) filter.finalPrice = { ...filter.finalPrice, $gte: min };
-    if (maxPrice !== undefined && Number.isFinite(max)) filter.finalPrice = { ...filter.finalPrice, $lte: max };
+    if (skip !== 'brand' && typeof brand === 'string' && brand.trim()) {
+        const brands = brand.split(',').map((b) => b.trim()).filter(Boolean).slice(0, 20);
+        if (brands.length) filter.brand = { $in: brands };
+    }
+    if (skip !== 'price') {
+        const min = numberParam(query.minPrice);
+        const max = numberParam(query.maxPrice);
+        if (min !== undefined) filter.finalPrice = { ...filter.finalPrice, $gte: min };
+        if (max !== undefined) filter.finalPrice = { ...filter.finalPrice, $lte: max };
+    }
+    const minRating = numberParam(query.minRating);
+    if (minRating !== undefined && minRating > 0) filter.averageRating = { $gte: Math.min(minRating, 5) };
+    const minDiscount = numberParam(query.minDiscount);
+    if (minDiscount !== undefined && minDiscount > 0) filter.discountPercent = { $gte: Math.min(minDiscount, 100) };
+    if (inStock === 'true') filter.stock_quantity = { $gt: 0 };
     return filter;
 }
 
@@ -61,6 +91,35 @@ const getAllProductHandler = catchAsync(async (req, res) => {
 const getAllProductsForAdmin = catchAsync(async (req, res) => {
     const base = req.user.role === 'seller' ? { createdBy: req.user._id } : {};
     await paginatedProducts(req, res, base);
+});
+
+/**
+ * GET /api/product/filters - options for the filter sidebar, based on the current search.
+ * Brand counts ignore the brand filter (so you can pick more brands), and the price range
+ * ignores the price filter (so the slider bounds don't shrink as you use it).
+ */
+const getProductFilters = catchAsync(async (req, res) => {
+    const base = { isActive: true };
+    const [brands, priceStats] = await Promise.all([
+        ProductModel.aggregate([
+            { $match: buildSearchFilter(req.query, base, { skip: 'brand' }) },
+            { $group: { _id: '$brand', count: { $sum: 1 } } },
+            { $sort: { count: -1, _id: 1 } },
+            { $limit: 50 },
+        ]),
+        ProductModel.aggregate([
+            { $match: buildSearchFilter(req.query, base, { skip: 'price' }) },
+            { $group: { _id: null, min: { $min: '$finalPrice' }, max: { $max: '$finalPrice' } } },
+        ]),
+    ]);
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            brands: brands.map((b) => ({ name: b._id, count: b.count })),
+            price: priceStats[0] ? { min: priceStats[0].min, max: priceStats[0].max } : { min: 0, max: 0 },
+        },
+    });
 });
 
 /** GET /api/product/categories */
@@ -153,6 +212,7 @@ module.exports = {
     getAllProductHandler,
     getAllProductsForAdmin,
     getProductCategories,
+    getProductFilters,
     getProductById,
     getProductForAdmin,
     createProductHandler,

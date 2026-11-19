@@ -33,6 +33,45 @@ test('listing supports search, category filter, price sorting and pagination', a
     assert.deepEqual(res.body.data, ['electronics', 'jewelery']);
 });
 
+test('filters by brand, rating, stock and discount, and sorts by biggest discount', async () => {
+    await createProduct({ name: 'A', brand: 'Sony', price: 1000, discount: 500, averageRating: 4.5, stock_quantity: 3 });
+    await createProduct({ name: 'B', brand: 'Sony', price: 1000, discount: 100, averageRating: 3.2, stock_quantity: 0 });
+    await createProduct({ name: 'C', brand: 'Boat', price: 1000, discount: 250, averageRating: 4.1, stock_quantity: 9 });
+    await createProduct({ name: 'D', brand: 'Apple', price: 1000, discount: 0, averageRating: 0, stock_quantity: 9 });
+
+    const names = async (query) => (await agent().get(`/api/product?${query}`)).body.data.map((p) => p.name).sort();
+
+    assert.deepEqual(await names('brand=Sony'), ['A', 'B']);
+    assert.deepEqual(await names('brand=Sony,Boat'), ['A', 'B', 'C']);
+    assert.deepEqual(await names('minRating=4'), ['A', 'C']);
+    assert.deepEqual(await names('inStock=true'), ['A', 'C', 'D']);
+    assert.deepEqual(await names('minDiscount=25'), ['A', 'C']);
+    assert.deepEqual(await names('brand=Sony&inStock=true&minRating=4'), ['A']);
+    assert.deepEqual(await names('minPrice=600&maxPrice=900'), ['B', 'C']);
+
+    const sorted = await agent().get('/api/product?sort=discount');
+    assert.deepEqual(sorted.body.data.map((p) => p.discountPercent), [50, 25, 10, 0]);
+});
+
+test('filters endpoint returns brand counts and price range for the current search', async () => {
+    await createProduct({ name: 'Phone', brand: 'Sony', price: 20000, discount: 0 });
+    await createProduct({ name: 'Headset', brand: 'Sony', price: 3000, discount: 0 });
+    await createProduct({ name: 'Speaker', brand: 'Boat', price: 1500, discount: 0 });
+    await createProduct({ name: 'Ring', brand: 'Tanishq', price: 9000, discount: 0, categories: ['jewelery'] });
+
+    // Brand counts ignore the brand filter (so more brands can be picked) but respect the category.
+    let res = await agent().get('/api/product/filters?category=electronics&brand=Boat');
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body.data.brands, [{ name: 'Sony', count: 2 }, { name: 'Boat', count: 1 }]);
+    // Price range respects the brand filter.
+    assert.deepEqual(res.body.data.price, { min: 1500, max: 1500 });
+
+    // Price range ignores the price filter itself; brand counts respect it.
+    res = await agent().get('/api/product/filters?category=electronics&minPrice=1000&maxPrice=5000');
+    assert.deepEqual(res.body.data.price, { min: 1500, max: 20000 });
+    assert.deepEqual(res.body.data.brands, [{ name: 'Boat', count: 1 }, { name: 'Sony', count: 1 }]);
+});
+
 test('regex characters in search are treated as plain text', async () => {
     await createProduct({ name: 'Plain' });
     const res = await agent().get('/api/product?q=' + encodeURIComponent('.*'));

@@ -3,6 +3,7 @@ const {
     getAllProductHandler,
     getAllProductsForAdmin,
     getProductCategories,
+    getProductFilters,
     getProductById,
     getProductForAdmin,
     createProductHandler,
@@ -18,6 +19,7 @@ const canManageProducts = [protectRouteMiddleWare, isAuthorizedMiddleWare(['admi
 // Fixed paths must come before "/:productId", otherwise Express treats them as an id.
 ProductRouter.get('/', getAllProductHandler);
 ProductRouter.get('/categories', getProductCategories);
+ProductRouter.get('/filters', getProductFilters);
 ProductRouter.get('/admin/all', ...canManageProducts, getAllProductsForAdmin);
 ProductRouter.get('/admin/:productId', ...canManageProducts, getProductForAdmin);
 ProductRouter.get('/:productId', getProductById);

@@ -1,0 +1,120 @@
+.filter-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 4px 16px 16px;
+}
+
+.filter-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.filter-panel-head h2 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+.filter-panel-head .btn-link {
+  font-size: 0.85rem;
+}
+
+.filter-section {
+  padding: 14px 0 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+.filter-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.filter-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.filter-section-head h3 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  margin: 0;
+}
+.filter-clear {
+  font-size: 0.8rem;
+}
+
+.filter-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.filter-options label,
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.925rem;
+  cursor: pointer;
+}
+.filter-options input,
+.filter-toggle input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+.filter-option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.filter-count {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.filter-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+}
+.filter-stars svg {
+  color: #f59e0b;
+  font-size: 0.8rem;
+}
+
+.filter-more {
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+.filter-price-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.filter-price-form input {
+  padding: 6px 8px;
+  font-size: 0.875rem;
+  min-width: 0;
+}
+.filter-price-form span {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.filter-hint {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}

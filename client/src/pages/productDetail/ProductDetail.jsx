@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import useFetchData from '../../hooks/useFetchData';
 import useAuth from '../../context/auth/useAuth';
@@ -65,6 +65,9 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { cart, addToCart } = useCart();
+  const [imageIndex, setImageIndex] = useState(0);
+  // Show the first picture again when moving to another product.
+  useEffect(() => setImageIndex(0), [productId]);
 
   const { data, error, isLoading, refetch: refetchProduct } = useFetchData(`${urlConfig.ALL_PRODUCT_URL}/${productId}`);
   const { data: reviewsData, refetch: refetchReviews } = useFetchData(`${urlConfig.REVIEW_URL}/${productId}?limit=20`);
@@ -97,8 +100,26 @@ const ProductDetail = () => {
       </nav>
 
       <section className="detail card">
-        <div className="detail-image">
-          <ProductImage src={product.productImages[0]} alt={product.name} />
+        <div className="detail-gallery">
+          <div className="detail-image">
+            {/* key resets the image's error state when switching pictures */}
+            <ProductImage key={imageIndex} src={product.productImages[imageIndex] || product.productImages[0]} alt={product.name} />
+          </div>
+          {product.productImages.length > 1 && (
+            <div className="detail-thumbs">
+              {product.productImages.map((src, index) => (
+                <button
+                  type="button"
+                  key={src}
+                  className={`detail-thumb ${index === imageIndex ? 'active' : ''}`}
+                  onClick={() => setImageIndex(index)}
+                  aria-label={`Show image ${index + 1}`}
+                >
+                  <ProductImage src={src} alt="" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="detail-info">
           <span className="product-brand">{product.brand}</span>

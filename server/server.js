@@ -1,13 +1,13 @@
 const env = require('./src/config/env');
 const app = require('./app');
 const { connectDB, disconnectDB } = require('./src/config/db');
-const { seedIfEmpty } = require('./src/seed_data/seed');
+const { syncSeedData } = require('./src/seed_data/seed');
 const { releaseExpiredBookings } = require('./src/services/bookingService');
 
 async function start() {
     await connectDB();
-    // In development, fill an empty database with sample products and demo accounts.
-    if (!env.isProd) await seedIfEmpty();
+    // In development, add any missing sample products, demo accounts and sample reviews.
+    if (!env.isProd) await syncSeedData();
 
     const server = app.listen(env.PORT, () => {
         console.log(`[api] server is listening on port ${env.PORT} (payments: ${env.paymentsMode})`);
