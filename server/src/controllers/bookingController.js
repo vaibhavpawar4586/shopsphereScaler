@@ -70,7 +70,8 @@ function paymentDetails(booking, user) {
         currency: booking.currency,
         name: env.STORE_NAME,
         description: `Order #${String(booking._id).slice(-8).toUpperCase()}`,
-        prefill: { name: booking.shippingAddress.fullName || user.name, email: user.email, contact: booking.shippingAddress.phone },
+        // Razorpay pre-fills the mobile number only when it includes the country code.
+        prefill: { name: booking.shippingAddress.fullName || user.name, email: user.email, contact: `+91${booking.shippingAddress.phone}` },
     };
 }
 
