@@ -17,9 +17,11 @@ services:
         value: "22"
       - key: JWT_SECRET
         generateValue: true
-      # Requests arrive through Netlify's proxy and Render's load balancer.
+      # Proxies between a visitor and the app: Netlify (2 hops) -> Cloudflare -> Render (2 hops).
+      # Measured from X-Forwarded-For on the live site. With this value req.ip is the visitor's
+      # address for requests through the Netlify site, which is how the frontend calls the API.
       - key: TRUST_PROXY_HOPS
-        value: "2"
+        value: "5"
       # Create the sample catalogue on first start (accounts only for the passwords you set).
       - key: SEED_SAMPLE_DATA
         value: "true"

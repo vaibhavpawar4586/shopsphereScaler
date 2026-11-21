@@ -41,15 +41,9 @@ const corsConfig = {
 app.use(cors(corsConfig));
 
 app.get('/api/health', (req, res) => {
-    // `ip` and `forwardedFor` describe the caller's own route to the server (only ever shown to
-    // that same caller). They are used to set TRUST_PROXY_HOPS correctly.
-    res.status(200).json({
-        status: 'success',
-        message: 'ok',
-        payments: env.paymentsMode,
-        ip: req.ip,
-        forwardedFor: req.get('x-forwarded-for') || null,
-    });
+    // `ip` is the caller's own address as the server sees it; it should match the caller's
+    // public IP when TRUST_PROXY_HOPS is right.
+    res.status(200).json({ status: 'success', message: 'ok', payments: env.paymentsMode, ip: req.ip });
 });
 
 // Razorpay webhook: needs the raw body to verify the signature, so it is registered
