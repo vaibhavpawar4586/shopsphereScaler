@@ -288,7 +288,7 @@ flowchart LR
     RZ[Razorpay] -->|webhook| R
 ```
 
-The browser only talks to the Netlify site; Netlify forwards `/api/*` to Render (`netlify.toml`). This keeps the login cookie first-party, which matters because Safari and other privacy-focused browsers block cookies set by a different site. It also means `VITE_BASE_URL` stays empty.
+The browser only talks to the Netlify site; Netlify forwards `/api/*` to Render (`client/public/_redirects`). This keeps the login cookie first-party, which matters because Safari and other privacy-focused browsers block cookies set by a different site. It also means `VITE_BASE_URL` stays empty.
 
 1. **GitHub** – push this repository.
 2. **MongoDB Atlas** – create a free (M0) cluster and a database user, and allow access from anywhere (Network Access → `0.0.0.0/0`), because Render's free plan has no fixed IP. Copy the connection string and add a database name, e.g. `...mongodb.net/shopsphere?retryWrites=true&w=majority`.
@@ -300,7 +300,7 @@ The browser only talks to the Netlify site; Netlify forwards `/api/*` to Render 
    - optional: `RAZORPAY_WEBHOOK_SECRET`, `SENDGRID_API_KEY`, `SENDER_EMAIL`
 
    `SEED_SAMPLE_DATA=true` adds the sample catalogue on first start. Check `https://<service>.onrender.com/api/health`.
-4. **Netlify (frontend)** – Add new site → Import from GitHub → this repo. `netlify.toml` sets base `client`, build `npm run build`, publish `dist`, and the `/api` proxy. If your Render URL isn't `https://shopsphere-api.onrender.com`, change it in `netlify.toml` and push.
+4. **Netlify (frontend)** – Add new site → Import from GitHub → this repo. `netlify.toml` sets base `client`, build `npm run build`, publish `dist`. The `/api` proxy and the single-page-app rule are in `client/public/_redirects`, which is copied into every build, so they work even if Netlify picks `client` as the base directory. If your Render URL isn't `https://shopsphere-api.onrender.com`, change it in `_redirects` and push.
 5. **CORS** – set `CLIENT_URL` on Render to the exact Netlify URL (no trailing slash; comma-separate several).
 6. **Razorpay webhook** (optional) – `https://<service>.onrender.com/api/booking/webhook` with `payment.captured`, `payment.failed` and `order.paid`, and the same secret in `RAZORPAY_WEBHOOK_SECRET`.
 

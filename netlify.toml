@@ -1,4 +1,6 @@
-# Netlify settings for the React frontend.
+# Netlify build settings for the React frontend (used when the site's base directory is
+# the repository root). Redirects - including the /api proxy to Render - live in
+# client/public/_redirects so they work whatever base directory Netlify uses.
 [build]
   base = "client"
   command = "npm run build"
@@ -6,19 +8,3 @@
 
 [build.environment]
   NODE_VERSION = "22"
-
-# Forward API calls to the Render backend. The browser only ever talks to the Netlify site,
-# so the login cookie is first-party (Safari and other browsers block cross-site cookies),
-# and VITE_BASE_URL can stay empty.
-# Change the URL below if your Render service has a different address.
-[[redirects]]
-  from = "/api/*"
-  to = "https://shopsphere-api.onrender.com/api/:splat"
-  status = 200
-  force = true
-
-# Single-page app: send every other route to index.html so React Router can handle it.
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
